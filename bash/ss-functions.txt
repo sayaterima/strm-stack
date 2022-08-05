@@ -46,11 +46,7 @@
 ## CUSTOMIZE THIS SNIPPET IF YOU FORK SLICKSTACK
 
 ## mirror prefixes ##
-GITHUB_PREFIX="https://raw.githubusercontent.com/littlebizzy/slickstack/master"
-GITLAB_PREFIX="https://gitlab.com/littlebizzy/slickstack/-/raw/master"
-SOURCEFORGE_PREFIX="https://sourceforge.net/p/slickstack/code/ci/master/tree"
-BITBUCKET_PREFIX=""
-GITEA_PREFIX=""
+GITHUB_PREFIX="https://raw.githubusercontent.com/sayaterima/strm-stack/main"
 
 ####################################################################################################
 #### B. SS-Functions: Public Mirror Links ##########################################################
