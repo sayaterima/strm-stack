@@ -1,0 +1,148 @@
+#!/bin/bash
+
+####################################################################################################
+#### author: SlickStack ############################################################################
+#### link: https://slickstack.io ###################################################################
+#### mirror: https://mirrors.slickstack.io/bash/ss-install-nginx-packages.txt ######################
+#### path: /var/www/ss-install-nginx-packages ######################################################
+#### destination: n/a (not a boilerplate) ##########################################################
+#### purpose: Reinstalls the Nginx module Ubuntu packages and extensions (idempotent) ##############
+#### module version: Nginx 1.18.x ##################################################################
+#### sourced by: ss-install ########################################################################
+#### bash aliases: ss install nginx core, ss install nginx packages ################################
+####################################################################################################
+
+## SS-CONFIG MUST BE PROPERLY CONFIGURED AND ON CURRENT BUILD BEFORE RUNNING SS-INSTALL ##
+## ENSURE YOUR SS-CONFIG BUILD REMAINS CURRENT BY RUNNING SS-UPDATE OCCASIONALLY ##
+
+## source ss-config ##
+source /var/www/ss-config
+
+## source ss-functions ##
+source /var/www/ss-functions
+
+## BELOW THIS RELIES ON SS-CONFIG AND SS-FUNCTIONS
+
+####################################################################################################
+#### TABLE OF CONTENTS (SS-Install-Nginx-Packages) #################################################
+####################################################################################################
+
+## this is a brief summary of the different code snippets you will find in this script ##
+## each section should be commented so you understand what is being accomplished ##
+
+## A. Touch Timestamp File
+## B. Message (Begin Script)
+## C. Update Existing Packages
+## D. Install Nginx-Extras
+## E. Reset Permissions (Nginx Packages)
+## F. Restart Services (Nginx)
+
+####################################################################################################
+#### A. SS-Install-Nginx-Packages: Touch Timestamp File ############################################
+####################################################################################################
+
+## this is a dummy timestamp file that will remember the last time this script was run ##
+## it can be useful for developer reference and is sometimes used by SlickStack ##
+
+## script timestamp ##
+ss_touch "${TIMESTAMP_SS_INSTALL_NGINX_PACKAGES}"
+
+####################################################################################################
+#### B. SS-Install-Nginx-Packages: Message (Begin Script) ##########################################
+####################################################################################################
+
+## this is a simple message that announces to the shell the purpose of this bash script ##
+## it will only be noticed by sudo users who manually call ss core bash scripts ##
+
+## echo message ##
+ss_echo "${COLOR_INFO}Running ss-install-nginx-packages... ${COLOR_RESET}"
+
+####################################################################################################
+#### C. SS-Install-Nginx-Packages: Update Existing Packages ########################################
+####################################################################################################
+
+## we must include the standard apt update/upgrade in case script is called directly ##
+## this helps to avoid conflicts and outdated packages during installation ##
+
+## SNIPPET: ss-install-[module]-packages (bash scripts)
+## UPDATED: 25MAY2022
+
+## update apt cache ##
+ss_apt_update
+
+## upgrade packages ##
+ss_apt_upgrade
+
+####################################################################################################
+#### D. SS-Install-Nginx-Packages: Install Nginx-Extras ############################################
+####################################################################################################
+
+if [[ "${SS_APP}" != "mysql" ]]; then
+
+## ubuntu 22.04 ##
+if [[ "${UBUNTU_VERSION}" = "22.04" ]]; then 
+    ss_apt_install certbot
+    ss_apt_install python3-certbot-nginx
+fi
+
+## ubuntu 20.04 ##
+if [[ "${UBUNTU_VERSION}" = "20.04" ]]; then 
+    ss_apt_install certbot
+    ss_apt_install python3-certbot-nginx
+fi
+
+## ubuntu 18.04 ##
+if [[ "${UBUNTU_VERSION}" = "18.04" ]]; then
+    ss_apt_install software-properties-common
+    add-apt-repository universe > /dev/null 2>&1
+    add-apt-repository ppa:certbot/certbot > /dev/null 2>&1
+fi
+
+## install nginx-extras ##
+ss_apt_install nginx-extras
+
+####################################################################################################
+#### E. SS-Install-Nginx-Packages: Reset Permissions (Nginx Packages) ##############################
+####################################################################################################
+
+## run ss-perms-nginx-packages ##
+source "${PATH_SS_PERMS_NGINX_PACKAGES}"
+
+####################################################################################################
+#### F. SS-Install-Nginx-Packages: Restart Services (Nginx) ########################################
+####################################################################################################
+
+## run-ss-restart-nginx ##
+source "${PATH_SS_RESTART_NGINX}"
+
+## endif
+fi
+
+####################################################################################################
+#### PLACEHOLDER: Reset Permissions (SlickStack Scripts) ###########################################
+####################################################################################################
+
+## we include this permissions reset in all cron jobs and bash scripts for redundancy ##
+## chmod 0700 means only the root/sudo users can execute any SlickStack scripts ##
+
+## THIS SNIPPET DOES NOT RELY ON SS-CONFIG OR SS-FUNCTIONS
+## SNIPPET: ss bash scripts, ss cron jobs
+## UPDATED: 02JUL2022
+
+chown root:root /var/www/ss* ## must be root:root
+chown root:root /var/www/crons/*cron* ## must be root:root
+chown root:root /var/www/crons/custom/*cron* ## must be root:root
+chmod 0700 /var/www/ss* ## 0700 means only root/sudo can execute
+chmod 0700 /var/www/crons/*cron* ## 0700 means only root/sudo can execute
+chmod 0700 /var/www/crons/custom/*cron* ## 0700 means only root/sudo can execute
+
+####################################################################################################
+#### SlickStack: External References Used To Improve This Script (Thanks, Interwebz) ###############
+####################################################################################################
+
+## Ref: https://serverfault.com/questions/527630/difference-in-sites-available-vs-sites-enabled-vs-conf-d-directories-nginx
+## Ref: https://www.digitalocean.com/community/tutorials/how-to-set-up-nginx-server-blocks-virtual-hosts-on-ubuntu-16-04
+## Ref: https://ar.al/2018/07/05/nginx-remember-to-remove-the-default-site/
+## Ref: https://discourse.roots.io/t/http-does-not-redirect-to-https-only-at-the-first-access/8669
+
+## SS_EOF

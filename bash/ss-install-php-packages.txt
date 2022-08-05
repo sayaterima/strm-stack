@@ -1,0 +1,304 @@
+#!/bin/bash
+
+####################################################################################################
+#### author: SlickStack ############################################################################
+#### link: https://slickstack.io ###################################################################
+#### mirror: https://mirrors.slickstack.io/bash/ss-install-php-packages.txt ########################
+#### path: /var/www/ss-install-php-packages ########################################################
+#### destination: n/a (not a boilerplate) ##########################################################
+#### purpose: Reinstalls the PHP-FPM module Ubuntu packages and extensions (idempotent) ############
+#### module version: PHP-FPM 8.1.x #################################################################
+#### sourced by: ss-install ########################################################################
+#### bash aliases: ss install php core, ss install php packages ####################################
+####################################################################################################
+
+## SS-CONFIG MUST BE PROPERLY CONFIGURED AND ON CURRENT BUILD BEFORE RUNNING SS-INSTALL ##
+## ENSURE YOUR SS-CONFIG BUILD REMAINS CURRENT BY RUNNING SS-UPDATE OCCASIONALLY ##
+
+####################################################################################################
+#### TABLE OF CONTENTS (SS-Install-PHP-Packages) ###################################################
+####################################################################################################
+
+## this is a brief summary of the different code snippets you will find in this script ##
+## each section should be commented so you understand what is being accomplished ##
+
+## A. Source SS-Config + SS-Functions
+## B. Touch Timestamp File
+## C. Message (Begin Script)
+## D. Update Existing Packages
+## E. Purge Any Existing PHP Packages (Optional)
+## F. Install PHP-FPM + PHP Extensions
+## G. Install PHP-Redis Extension (Required)
+## H. Set Default PHP Version
+## I. Reset Permissions (PHP Packages)
+## J. Purge Cache (PHP OPcache)
+## K. Restart Services (PHP-FPM)
+## L. Reset Permissions (SlickStack Scripts)
+
+####################################################################################################
+#### A. SS-Install-PHP-Packages: Source SS-Config + SS-Functions ###################################
+####################################################################################################
+
+## source ss-config ##
+source /var/www/ss-config
+
+## source ss-functions ##
+source /var/www/ss-functions
+
+## BELOW THIS RELIES ON SS-CONFIG AND SS-FUNCTIONS
+
+####################################################################################################
+#### B. SS-Install-PHP-Packages: Touch Timestamp File ##############################################
+####################################################################################################
+
+## this is a dummy timestamp file that will remember the last time this script was run ##
+## it can be useful for developer reference and is sometimes used by SlickStack ##
+
+## script timestamp ##
+ss_touch "${TIMESTAMP_SS_INSTALL_PHP_PACKAGES}"
+
+####################################################################################################
+#### C. SS-Install-PHP-Packages: Message (Begin Script) ############################################
+####################################################################################################
+
+## this is a simple message that announces to the shell the purpose of this bash script ##
+## it will only be noticed by sudo users who manually call ss core bash scripts ##
+
+## echo message ##
+ss_echo "${COLOR_INFO}Running ss-install-php-packages... ${COLOR_RESET}"
+
+####################################################################################################
+#### D. SS-Install-PHP-Packages: Update Existing Packages ##########################################
+####################################################################################################
+
+## we must include the standard apt update/upgrade in case script is called directly ##
+## this helps to avoid conflicts and outdated packages during installation ##
+
+## SNIPPET: ss-install-[module]-packages bash scripts
+## UPDATED: 08JUL2022
+
+## update apt cache ##
+ss_apt_update
+
+## upgrade packages ##
+ss_apt_upgrade
+
+####################################################################################################
+#### E. SS-Install-PHP-Packages: Purge Any Existing PHP Packages (Optional) ########################
+####################################################################################################
+
+## here we first purge any existing PHP packages and then reinstall PHP-FPM from scratch ##
+## this approach is safe and helps avoid any conflicts between package versions ##
+
+if [[ "${SS_APP}" != "mysql" ]]; then
+
+    if [[ "${SS_INSTALL_PHP_PACKAGES_PURGE_FIRST}" == "true" ]]; then
+
+    ## purge packages ##
+    apt purge ^php
+
+    ## delete any leftover PHP files (disable for now because apt will not create these files if it notices the php directory exists already) ##
+    # rm /etc/php*
+    
+    fi
+
+fi
+
+####################################################################################################
+#### F. SS-Install-PHP-Packages: Install PHP-FPM + PHP Extensions ##################################
+####################################################################################################
+
+## here PHP-FPM will be installed along with any custom PHP extensions in your ss-config ##
+## remember to check version compatibility of PHP extensions if you modify them ##
+
+if [[ "${SS_APP}" != "mysql" ]]; then
+
+## ubuntu 22.04 ##
+if [[ "${UBUNTU_VERSION}" == "22.04" ]]; then
+    PHP_EXTENSIONS_NOW=$(source /var/www/ss-config; echo "${PHP_EXTENSIONS}")
+    
+        ss_apt_install php8.1-fpm
+        ss_apt_install php8.1-bcmath
+        ss_apt_install php8.1-curl
+        ss_apt_install php8.1-gd
+        ss_apt_install php8.1-imagick
+        ss_apt_install php8.1-mbstring
+        ss_apt_install php8.1-mysql
+        ss_apt_install php8.1-soap
+        ss_apt_install php8.1-sqlite3
+        ss_apt_install php8.1-xml
+        ss_apt_install php8.1-zip
+    
+        ## https://stackoverflow.com/questions/27702452/loop-through-a-comma-separated-shell-variable
+    if [[ -n "${PHP_EXTENSIONS_NOW}" ]]; then
+        for i in ${PHP_EXTENSIONS_NOW//,/ }
+            do
+            ss_apt_install php8.1-"$i"
+        done
+    fi
+fi
+
+## ubuntu 20.04 ##
+if [[ "${UBUNTU_VERSION}" == "20.04" ]]; then
+    PHP_EXTENSIONS_NOW=$(source /var/www/ss-config; echo "${PHP_EXTENSIONS}")
+    
+        ss_apt_install php7.4-fpm
+        ss_apt_install php7.4-bcmath
+        ss_apt_install php7.4-ctype
+        ss_apt_install php7.4-curl
+        ss_apt_install php7.4-dom
+        ss_apt_install php7.4-fileinfo
+        ss_apt_install php7.4-gd
+        ss_apt_install php7.4-iconv
+        ss_apt_install php7.4-intl
+        ss_apt_install php7.4-imagick
+        ss_apt_install php7.4-json
+        ss_apt_install php7.4-mbstring
+        ss_apt_install php7.4-mysql
+        ss_apt_install php7.4-simplexml
+        ss_apt_install php7.4-soap
+        ss_apt_install php7.4-sockets
+        ss_apt_install php7.4-sqlite3
+        ss_apt_install php7.4-xml
+        ss_apt_install php7.4-xmlwriter
+        ss_apt_install php7.4-xsl
+        ss_apt_install php7.4-zip
+        
+        ## https://stackoverflow.com/questions/27702452/loop-through-a-comma-separated-shell-variable
+    if [[ -n "${PHP_EXTENSIONS_NOW}" ]]; then
+        for i in ${PHP_EXTENSIONS_NOW//,/ }
+            do
+            ss_apt_install php7.4-"$i"
+        done
+    fi
+
+fi
+
+## ubuntu 18.04 ##
+if [[ "${UBUNTU_VERSION}" == "18.04" ]]; then
+    PHP_EXTENSIONS_NOW=$(source /var/www/ss-config; echo "${PHP_EXTENSIONS}")
+    
+        ss_apt_install php7.2-fpm
+        ss_apt_install php7.2-bcmath
+        ss_apt_install php7.2-curl
+        ss_apt_install php7.2-gd
+        ss_apt_install php7.2-imagick
+        ss_apt_install php7.2-json
+        ss_apt_install php7.2-mbstring
+        ss_apt_install php7.2-mysql
+        ss_apt_install php7.2-soap
+        ss_apt_install php7.2-sqlite3
+        ss_apt_install php7.2-xml
+        ss_apt_install php7.2-zip
+
+        ## https://stackoverflow.com/questions/27702452/loop-through-a-comma-separated-shell-variable
+    if [[ -n "${PHP_EXTENSIONS_NOW}" ]]; then
+        for i in ${PHP_EXTENSIONS_NOW//,/ }
+            do
+            ss_apt_install php7.2-"$i"
+        done
+    fi
+
+fi 
+
+## end if not mysql app
+fi
+
+####################################################################################################
+#### G. SS-Install-PHP-Packages: Install PHP-Redis Extension (Required) ############################
+####################################################################################################
+
+## we force install the php-redis extension to ensure it exists on SlickStack servers ##
+## this is because Redis is a core module and required for i.e. object caching ##
+
+## ubuntu 22.04 ##
+if [[ "${UBUNTU_VERSION}" == "22.04" ]] && [[ "${SS_APP}" != "mysql" ]]; then
+    ss_apt_install php-redis
+fi
+
+## ubuntu 20.04 ##
+if [[ "${UBUNTU_VERSION}" == "20.04" ]] && [[ "${SS_APP}" != "mysql" ]]; then
+    ss_apt_install php-redis
+fi
+
+## ubuntu 18.04 ##
+if [[ "${UBUNTU_VERSION}" == "18.04" ]] && [[ "${SS_APP}" != "mysql" ]]; then
+    ss_apt_install php-redis
+fi
+
+####################################################################################################
+#### H. SS-Install-PHP-Packages: Set Default PHP Version ###########################################
+####################################################################################################
+
+## here we set the default PHP version depending on the version of Ubuntu LTS detected ##
+## in most cases this step is not necessary but we do it anyway for consistency ##
+
+## ubuntu 22.04 ##
+if [[ "${UBUNTU_VERSION}" == "22.04" ]] && [[ "${SS_APP}" != "mysql" ]]; then
+    update-alternatives --set php /usr/bin/php8.1
+fi
+
+## ubuntu 20.04 ##
+if [[ "${UBUNTU_VERSION}" == "20.04" ]] && [[ "${SS_APP}" != "mysql" ]]; then
+    update-alternatives --set php /usr/bin/php7.4
+fi
+
+## ubuntu 18.04 ##
+if [[ "${UBUNTU_VERSION}" == "18.04" ]] && [[ "${SS_APP}" != "mysql" ]]; then
+    update-alternatives --set php /usr/bin/php7.2
+fi
+
+####################################################################################################
+#### I. SS-Install-PHP-Packages: Reset Permissions (PHP Packages) ##################################
+####################################################################################################
+
+## run ss-perms-php-packages ##
+source "${PATH_SS_PERMS_PHP_PACKAGES}"
+
+####################################################################################################
+#### J. SS-Install-PHP-Packages: Purge Cache (PHP OPcache) #########################################
+####################################################################################################
+
+## run ss-purge-opcache ##
+source "${PATH_SS_PURGE_OPCACHE}"
+
+####################################################################################################
+#### K. SS-Install-PHP-Packages: Restart Services (PHP-FPM) ########################################
+####################################################################################################
+
+## run ss-restart-php ##
+source "${PATH_SS_RESTART_PHP}"
+
+####################################################################################################
+#### L. SS-Install-PHP-Packages: Reset Permissions (SlickStack Scripts) ############################
+####################################################################################################
+
+## we include this permissions reset in all cron jobs and bash scripts for redundancy ##
+## chmod 0700 means only the root/sudo users can execute any SlickStack scripts ##
+
+## THIS SNIPPET DOES NOT RELY ON SS-CONFIG OR SS-FUNCTIONS
+## SNIPPET: ss bash scripts, ss cron jobs
+## UPDATED: 02JUL2022
+
+chown root:root /var/www/ss* ## must be root:root
+chown root:root /var/www/crons/*cron* ## must be root:root
+chown root:root /var/www/crons/custom/*cron* ## must be root:root
+chmod 0700 /var/www/ss* ## 0700 means only root/sudo can execute
+chmod 0700 /var/www/crons/*cron* ## 0700 means only root/sudo can execute
+chmod 0700 /var/www/crons/custom/*cron* ## 0700 means only root/sudo can execute
+
+####################################################################################################
+#### SlickStack: External References Used To Improve This Script (Thanks, Interwebz) ###############
+####################################################################################################
+
+## Ref: https://askubuntu.com/questions/541781/install-list-of-packages-using-apt-get
+## Ref: https://stackoverflow.com/questions/22284131/why-cant-i-install-multiple-packages-with-apt-get-install
+## Ref: https://askubuntu.com/questions/913221/why-does-my-install-shell-script-not-work-when-i-can-run-it-line-by-line-and-it
+## Ref: https://askubuntu.com/questions/39497/apt-get-install-multiple-packages-without-stopping
+## Ref: https://www.getastra.com/kb/knowledgebase/how-to-install-sqlite-for-php-on-my-apache-nginx-server/
+## Ref: https://www.phoronix.com/scan.php?page=news_item&px=Ubuntu-21.10-PHP-8-Transition
+## Ref: https://linuxize.com/post/how-to-check-if-string-contains-substring-in-bash/
+## Ref: https://stackoverflow.com/questions/229551/how-to-check-if-a-string-contains-a-substring-in-bash
+## Ref: https://stackoverflow.com/questions/27702452/loop-through-a-comma-separated-shell-variable
+
+## SS_EOF

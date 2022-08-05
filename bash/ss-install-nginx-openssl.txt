@@ -1,0 +1,151 @@
+#!/bin/bash
+
+####################################################################################################
+#### author: SlickStack ############################################################################
+#### link: https://slickstack.io ###################################################################
+#### mirror: https://mirrors.slickstack.io/bash/ss-install-nginx-openssl.txt #######################
+#### path: /var/www/ss-install-nginx-openssl #######################################################
+#### destination: n/a (not a boilerplate) ##########################################################
+#### purpose: Reinstalls OpenSSL certificate to Nginx (idempotent) ##########
+#### module version: Nginx 1.18.x ##################################################################
+#### sourced by: ss-install-nginx ##################################################################
+#### bash aliases: ss install nginx openssl ############################################
+####################################################################################################
+
+## SS-CONFIG MUST BE PROPERLY CONFIGURED AND ON CURRENT BUILD BEFORE RUNNING SS-INSTALL ##
+## ENSURE YOUR SS-CONFIG BUILD REMAINS CURRENT BY RUNNING SS-UPDATE OCCASIONALLY ##
+
+## source ss-config ##
+source /var/www/ss-config
+
+## source ss-functions ##
+source /var/www/ss-functions
+
+## BELOW THIS RELIES ON SS-CONFIG AND SS-FUNCTIONS
+
+####################################################################################################
+#### TABLE OF CONTENTS (SS-Install-Nginx-OpenSSL) ##################################################
+####################################################################################################
+
+## this is a brief summary of the different code snippets you will find in this script ##
+## each section should be commented so you understand what is being accomplished ##
+
+## A. Touch Timestamp File
+## B. Message (Begin Script)
+
+####################################################################################################
+#### A. SS-Install-Nginx-OpenSSL: Touch Timestamp File #############################################
+####################################################################################################
+
+## this is a dummy timestamp file that will remember the last time this script was run ##
+## it can be useful for developer reference and is sometimes used by SlickStack ##
+
+## script timestamp ##
+ss_touch "${TIMESTAMP_SS_INSTALL_NGINX_OPENSSL}"
+
+####################################################################################################
+#### B. SS-Install-Nginx-OpenSSL: Message (Begin Script) ###########################################
+####################################################################################################
+
+## this is a simple message that announces to the shell the purpose of this bash script ##
+## it will only be noticed by sudo users who manually call ss core bash scripts ##
+
+## echo message ##
+ss_echo "${COLOR_INFO}Running ss-install-nginx-openssl... ${COLOR_RESET}"
+
+####################################################################################################
+#### C. SS-Install-Nginx-OpenSSL: Enable OpenSSL Certificate (Nginx Submodule) #####################
+####################################################################################################
+
+## here we update the Nginx config files to activate either OpenSSL or Lets Encrypt SSL ##
+## this depends on your ss-config settings (both certs should exist regardless) ##
+
+## retrieve Lets Encrypt and OpenSSL sub-config file ##
+ss_wget_slowest "${TMP_OPENSSL_CONF}" "${MIRROR_OPENSSL_CONF}"
+
+## SEARCH AND REPLACE SSL SETTINGS ## 
+
+## SSL protocols ##
+if [[ -z "${SSL_PROTOCOLS}" ]]; then 
+    sed -i "s/@SSL_PROTOCOLS/TLSv1.2 TLSv1.3/g" "${TMP_OPENSSL_CONF}"
+else 
+    sed -i "s/@SSL_PROTOCOLS/${SSL_PROTOCOLS}/g" "${TMP_OPENSSL_CONF}"
+fi
+
+## SSL ciphers ##
+if [[ -z "${SSL_CIPHERS}" ]]; then 
+    sed -i "s/@SSL_CIPHERS/ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384/g" "${TMP_OPENSSL_CONF}"
+else 
+    sed -i "s/@SSL_CIPHERS/${SSL_CIPHERS}/g" "${TMP_OPENSSL_CONF}"
+fi
+
+## SSL session timeout ##
+if [[ -z "${SSL_SESSION_TIMEOUT}" ]]; then 
+    sed -i "s/@SSL_SESSION_TIMEOUT/1d/g" "${TMP_OPENSSL_CONF}"
+else 
+    sed -i "s/@SSL_SESSION_TIMEOUT/${SSL_SESSION_TIMEOUT}/g" "${TMP_OPENSSL_CONF}"
+fi
+
+## SSL session cache ##
+if [[ -z "${SSL_SESSION_CACHE}" ]]; then 
+    sed -i "s/@SSL_SESSION_CACHE/shared:SSL:64m/g" "${TMP_OPENSSL_CONF}"
+else 
+    sed -i "s/@SSL_SESSION_CACHE/${SSL_SESSION_CACHE}/g" "${TMP_OPENSSL_CONF}"
+fi
+
+## SSL buffer size ##
+if [[ -z "${SSL_BUFFER_SIZE}" ]]; then 
+    sed -i "s/@SSL_BUFFER_SIZE/16k/g" "${TMP_OPENSSL_CONF}"
+else 
+    sed -i "s/@SSL_BUFFER_SIZE/${SSL_BUFFER_SIZE}/g" "${TMP_OPENSSL_CONF}"
+fi
+
+## here we modify the live Nginx configuration files to activate Lets Encrypt certificates ##
+## this snippet will only be executed if Lets Encrypt certs appear to be successful ##
+
+## enable openssl submodule ##
+    ss_cp "${TMP_OPENSSL_CONF}" /etc/nginx/conf.d/openssl.conf
+    ss_rm /etc/nginx/conf.d/letsencrypt.conf*
+
+####################################################################################################
+#### SS-Install-Nginx-OpenSSL: Reset Permissions (Nginx SSL) #######################################
+####################################################################################################
+
+## run ss-perms-nginx-ssl ##
+source "${PATH_SS_PERMS_NGINX_SSL}"
+
+####################################################################################################
+#### SS-Install-Nginx-OpenSSL: Restart Services (Nginx) ############################################
+####################################################################################################
+
+## run ss-restart-nginx ##
+source "${PATH_SS_RESTART_NGINX}"
+
+####################################################################################################
+#### PLACEHOLDER: Reset Permissions (SlickStack Scripts) ###########################################
+####################################################################################################
+
+## we include this permissions reset in all cron jobs and bash scripts for redundancy ##
+## chmod 0700 means only the root/sudo users can execute any SlickStack scripts ##
+
+## THIS SNIPPET DOES NOT RELY ON SS-CONFIG OR SS-FUNCTIONS
+## SNIPPET: ss bash scripts, ss cron jobs
+## UPDATED: 02JUL2022
+
+chown root:root /var/www/ss* ## must be root:root
+chown root:root /var/www/crons/*cron* ## must be root:root
+chown root:root /var/www/crons/custom/*cron* ## must be root:root
+chmod 0700 /var/www/ss* ## 0700 means only root/sudo can execute
+chmod 0700 /var/www/crons/*cron* ## 0700 means only root/sudo can execute
+chmod 0700 /var/www/crons/custom/*cron* ## 0700 means only root/sudo can execute
+
+####################################################################################################
+#### SlickStack: External References Used To Improve This Script (Thanks, Interwebz) ###############
+####################################################################################################
+
+## Ref: https://github.com/littlebizzy/slickstack/blob/master/ss-install-nginx-config.txt
+## Ref: https://github.com/littlebizzy/slickstack/blob/master/ss-encrypt-openssl.txt
+## Ref: https://github.com/littlebizzy/slickstack/blob/master/ss-encrypt-certbot.txt
+## Ref: https://serverfault.com/questions/886943/ssl-for-multiple-servers-and-sub-domains
+
+## SS_EOF

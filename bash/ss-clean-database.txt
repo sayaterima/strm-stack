@@ -1,0 +1,127 @@
+#!/bin/bash
+
+####################################################################################################
+#### author: SlickStack ############################################################################
+#### link: https://slickstack.io ###################################################################
+#### mirror: https://mirrors.slickstack.io/bash/ss-clean-database.txt ##############################
+#### path: /var/www/ss-clean-database ##############################################################
+#### destination: n/a (not a boilerplate) ##########################################################
+#### purpose: Cleans up a specific list of junk tables/data from the MySQL database ################
+#### module version: Ubuntu 22.04 LTS ##############################################################
+#### sourced by: #################################################################
+#### bash aliases: ss clean database, ss clean db ##################################################
+####################################################################################################
+
+## source ss-config ##
+source /var/www/ss-config
+
+## source ss-functions ##
+source /var/www/ss-functions
+
+## BELOW THIS RELIES ON SS-CONFIG AND SS-FUNCTIONS
+
+####################################################################################################
+#### TABLE OF CONTENTS (SS-Clean-Database) #########################################################
+####################################################################################################
+
+## this is a brief summary of the different code snippets you will find in this script ##
+## each section should be commented so you understand what is being accomplished ##
+
+## A. Touch Timestamp File
+## B. Message (Begin Script)
+
+####################################################################################################
+#### A. SS-Clean-Database: Touch Timestamp File ####################################################
+####################################################################################################
+
+## this is a dummy timestamp file that will remember the last time this script was run ##
+## it can be useful for developer reference and is sometimes used by SlickStack ##
+
+## script timestamp ##
+ss_touch "${TIMESTAMP_SS_CLEAN_DATABASE}"
+
+####################################################################################################
+#### B. SS-Clean-Database: Message (Begin Script) ##################################################
+####################################################################################################
+
+## this is a simple message that announces to the shell the purpose of this bash script ##
+## it will only be noticed by sudo users who manually call ss core bash scripts ##
+
+## echo message ##
+ss_echo "${COLOR_INFO}Running ss-clean-database... ${COLOR_RESET}"
+
+####################################################################################################
+#### B. SS-Clean-Database: Delete Junk Database Tables ##################################################
+####################################################################################################
+
+## wordfence ##
+# wp_wfblockediplog
+# wp_wfblocks7
+# wp_wfconfig
+# wp_wfcrawlers
+# wp_wffilechanges
+# wp_wffilemods
+# wp_wfhits
+# wp_wfhoover
+# wp_wfissues
+# wp_wfknownfilelist
+# wp_wflivetraffichuman
+# wp_wflocs
+# wp_wflogins
+# wp_wfls_2fa_secrets
+# wp_wfls_settings
+# wp_wfnotifications
+# wp_wfpendingissues
+# wp_wfreversecache
+# wp_wfsnipcache
+# wp_wfstatus
+# wp_wftrafficrates
+# wp_wfwafconfig
+
+## wp defender ##
+# wp_defender_audit_log
+# wp_defender_email_log
+# wp_defender_lockout
+# wp_defender_lockout_log
+# wp_defender_scan
+# wp_defender_scan_item
+
+## ewww ##
+# wp_ewwwio_images
+# wp_ewwwio_queue
+
+## rank math ##
+# wp_rank_math_404_logs
+# wp_rank_math_analytics_gsc
+# wp_rank_math_analytics_inspections
+# wp_rank_math_analytics_objects
+# wp_rank_math_internal_links
+# wp_rank_math_internal_meta
+# wp_rank_math_redirections
+# wp_rank_math_redirections_cache
+
+####################################################################################################
+#### PLACEHOLDER: Reset Permissions (SlickStack Scripts) ###########################################
+####################################################################################################
+
+## we include this permissions reset in all cron jobs and bash scripts for redundancy ##
+## chmod 0700 means only the root/sudo users can execute any SlickStack scripts ##
+
+## THIS SNIPPET DOES NOT RELY ON SS-CONFIG OR SS-FUNCTIONS
+## SNIPPET: ss bash scripts, ss cron jobs
+## UPDATED: 02JUL2022
+
+chown root:root /var/www/ss* ## must be root:root
+chown root:root /var/www/crons/*cron* ## must be root:root
+chown root:root /var/www/crons/custom/*cron* ## must be root:root
+chmod 0700 /var/www/ss* ## 0700 means only root/sudo can execute
+chmod 0700 /var/www/crons/*cron* ## 0700 means only root/sudo can execute
+chmod 0700 /var/www/crons/custom/*cron* ## 0700 means only root/sudo can execute
+
+####################################################################################################
+#### SlickStack: External References Used To Improve This Script (Thanks, Interwebz) ###############
+####################################################################################################
+
+## Ref:
+
+## SS_EOF

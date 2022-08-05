@@ -1,0 +1,493 @@
+#!/bin/bash
+
+####################################################################################################
+#### author: SlickStack ############################################################################
+#### link: https://slickstack.io ###################################################################
+#### mirror: https://mirrors.slickstack.io/bash/ss-install-php-config.txt ##########################
+#### path: /var/www/ss-install-php-config ##########################################################
+#### destination: n/a (not a boilerplate) ##########################################################
+#### purpose: Reinstalls the PHP-FPM module config files based on ss-config (idempotent) ###########
+#### module version: PHP-FPM 8.1.x #################################################################
+#### sourced by: ss-install ########################################################################
+#### bash aliases: ss install php config ###########################################################
+####################################################################################################
+
+## SS-CONFIG MUST BE PROPERLY CONFIGURED AND ON CURRENT BUILD BEFORE RUNNING SS-INSTALL ##
+## ENSURE YOUR SS-CONFIG BUILD REMAINS CURRENT BY RUNNING SS-UPDATE OCCASIONALLY ##
+
+## source ss-config ##
+source /var/www/ss-config
+
+## source ss-functions ##
+source /var/www/ss-functions
+
+## BELOW THIS RELIES ON SS-CONFIG AND SS-FUNCTIONS
+
+####################################################################################################
+#### TABLE OF CONTENTS (SS-Install-PHP-Config) #####################################################
+####################################################################################################
+
+## this is a brief summary of the different code snippets you will find in this script ##
+## each section should be commented so you understand what is being accomplished ##
+
+## A. Touch Timestamp File
+## B. Message (Begin Script)
+## C. Retrieve Current Boilerplates
+
+## E. Install PHP-FPM.conf
+## F. Install WWW.conf
+
+####################################################################################################
+#### A. SS-Install-PHP-Config: Touch Timestamp File ################################################
+####################################################################################################
+
+## this is a dummy timestamp file that will remember the last time this script was run ##
+## it can be useful for developer reference and is sometimes used by SlickStack ##
+
+## script timestamp ##
+ss_touch "${TIMESTAMP_SS_INSTALL_PHP_CONFIG}"
+
+####################################################################################################
+#### B. SS-Install-PHP-Config: Message (Begin Script) ##############################################
+####################################################################################################
+
+## this is a simple message that announces to the shell the purpose of this bash script ##
+## it will only be noticed by sudo users who manually call ss core bash scripts ##
+
+## echo message ##
+ss_echo "${COLOR_INFO}Running ss-install-php-config... ${COLOR_RESET}"
+
+####################################################################################################
+#### C. SS-Install-PHP-Config: Retrieve Current Boilerplates #######################################
+####################################################################################################
+
+## next we optimize the PHP-FPM configuration files based on settings from ss-config ##
+## several common PHP settings are hardcoded to improve LEMP server stability ##
+
+## download latest versions ##
+
+if [[ "${UBUNTU_VERSION}" == "22.04" ]]; then
+    ss_wget_slowest "${TMP_PHP_FPM_CONF}" "${MIRROR_PHP_FPM_CONF_81}"
+    ss_wget_slowest "${TMP_PHP_INI}" "${MIRROR_PHP_INI_81}"
+    ss_wget_slowest "${TMP_WWW_CONF}" "${MIRROR_WWW_CONF_81}"
+fi
+
+if [[ "${UBUNTU_VERSION}" == "20.04" ]]; then
+    ss_wget_slowest "${TMP_PHP_FPM_CONF}" "${MIRROR_PHP_FPM_CONF}"
+    ss_wget_slowest "${TMP_PHP_INI}" "${MIRROR_PHP_INI}"
+    ss_wget_slowest "${TMP_WWW_CONF}" "${MIRROR_WWW_CONF}"
+fi
+
+if [[ "${UBUNTU_VERSION}" == "18.04" ]]; then
+    ss_wget_slowest "${TMP_PHP_FPM_CONF}" "${MIRROR_PHP_FPM_CONF_72}"
+    ss_wget_slowest "${TMP_PHP_INI}" "${MIRROR_PHP_INI_72}"
+    ss_wget_slowest "${TMP_WWW_CONF}" "${MIRROR_WWW_CONF_72}"
+fi
+
+####################################################################################################
+#### SS-Install-PHP-Config: Configure PHP.ini Boilerplate (Per Ubuntu Version) #####################
+####################################################################################################
+
+## max execution time ##
+if [[ -z "$PHP_MAX_EXECUTION_TIME" ]]; then 
+    sed -i "s/@PHP_MAX_EXECUTION_TIME/60/g" "$TMP_PHP_INI"
+else 
+    sed -i "s/@PHP_MAX_EXECUTION_TIME/${PHP_MAX_EXECUTION_TIME}/g" "$TMP_PHP_INI"
+fi
+
+## max input time ##
+if [[ -z "$PHP_MAX_INPUT_TIME" ]]; then 
+    sed -i "s/@PHP_MAX_INPUT_TIME/60/g" "$TMP_PHP_INI"
+else 
+    sed -i "s/@PHP_MAX_INPUT_TIME/${PHP_MAX_INPUT_TIME}/g" "$TMP_PHP_INI"
+fi
+
+## memory limit ##
+if [[ -z "$PHP_MEMORY_LIMIT" ]]; then 
+    sed -i "s/@PHP_MEMORY_LIMIT/512M/g" "$TMP_PHP_INI"
+else 
+    sed -i "s/@PHP_MEMORY_LIMIT/${PHP_MEMORY_LIMIT}/g" "$TMP_PHP_INI"
+fi
+
+## max input vars ##
+if [[ -z "$PHP_MAX_INPUT_VARS" ]]; then 
+    sed -i "s/@PHP_MAX_INPUT_VARS/5000/g" "$TMP_PHP_INI"
+else 
+    sed -i "s/@PHP_MAX_INPUT_VARS/${PHP_MAX_INPUT_VARS}/g" "$TMP_PHP_INI"
+fi
+
+## max input nesting level ##
+if [[ -z "$PHP_MAX_INPUT_NESTING_LEVEL" ]]; then 
+    sed -i "s/@PHP_MAX_INPUT_NESTING_LEVEL/64/g" "$TMP_PHP_INI"
+else 
+    sed -i "s/@PHP_MAX_INPUT_NESTING_LEVEL/${PHP_MAX_INPUT_NESTING_LEVEL}/g" "$TMP_PHP_INI"
+fi
+
+## upload max filesize ##
+if [[ -z "$PHP_UPLOAD_MAX_FILESIZE" ]]; then 
+    sed -i "s/@PHP_UPLOAD_MAX_FILESIZE/512M/g" "$TMP_PHP_INI"
+else 
+    sed -i "s/@PHP_UPLOAD_MAX_FILESIZE/${PHP_UPLOAD_MAX_FILESIZE}/g" "$TMP_PHP_INI"
+fi
+
+## max file uploads ##
+if [[ -z "$PHP_MAX_FILE_UPLOADS" ]]; then 
+    sed -i "s/@PHP_MAX_FILE_UPLOADS/100/g" "$TMP_PHP_INI"
+else 
+    sed -i "s/@PHP_MAX_FILE_UPLOADS/${PHP_MAX_FILE_UPLOADS}/g" "$TMP_PHP_INI"
+fi
+
+## php precision ##
+if [[ -z "$PHP_PRECISION" ]]; then 
+    sed -i "s/@PHP_PRECISION/14/g" "$TMP_PHP_INI"
+else 
+    sed -i "s/@PHP_PRECISION/${PHP_PRECISION}/g" "$TMP_PHP_INI"
+fi
+
+## php output buffering ##
+if [[ -z "$PHP_OUTPUT_BUFFERING" ]]; then 
+    sed -i "s/@PHP_OUTPUT_BUFFERING/4096/g" "$TMP_PHP_INI"
+else 
+    sed -i "s/@PHP_OUTPUT_BUFFERING/${PHP_OUTPUT_BUFFERING}/g" "$TMP_PHP_INI"
+fi
+
+## php unserialize max depth ##
+if [[ -z "$PHP_UNSERIALIZE_MAX_DEPTH" ]]; then 
+    sed -i "s/@PHP_UNSERIALIZE_MAX_DEPTH/4096/g" "$TMP_PHP_INI"
+else 
+    sed -i "s/@PHP_UNSERIALIZE_MAX_DEPTH/${PHP_UNSERIALIZE_MAX_DEPTH}/g" "$TMP_PHP_INI"
+fi
+
+## php serialize precision ##
+if [[ -z "$PHP_SERIALIZE_PRECISION" ]]; then 
+    sed -i "s/@PHP_SERIALIZE_PRECISION/-1/g" "$TMP_PHP_INI"
+else 
+    sed -i "s/@PHP_SERIALIZE_PRECISION/${PHP_SERIALIZE_PRECISION}/g" "$TMP_PHP_INI"
+fi
+
+## php allow url fopen ##
+if [[ -z "$PHP_ALLOW_URL_FOPEN" ]]; then 
+    sed -i "s/@PHP_ALLOW_URL_FOPEN/On/g" "$TMP_PHP_INI"
+elif [[ "$PHP_ALLOW_URL_FOPEN" == "true" ]]; then
+    sed -i "s/@PHP_ALLOW_URL_FOPEN/On/g" "$TMP_PHP_INI"
+elif [[ "$PHP_ALLOW_URL_FOPEN" == "On" ]]; then
+    sed -i "s/@PHP_ALLOW_URL_FOPEN/On/g" "$TMP_PHP_INI"
+elif [[ "$PHP_ALLOW_URL_FOPEN" == "false" ]]; then
+    sed -i "s/@PHP_ALLOW_URL_FOPEN/Off/g" "$TMP_PHP_INI"
+elif [[ "$PHP_ALLOW_URL_FOPEN" == "Off" ]]; then
+    sed -i "s/@PHP_ALLOW_URL_FOPEN/Off/g" "$TMP_PHP_INI"
+fi
+
+## php default socket timeout ##
+if [[ -z "$PHP_DEFAULT_SOCKET_TIMEOUT" ]]; then 
+    sed -i "s/@PHP_DEFAULT_SOCKET_TIMEOUT/60/g" "$TMP_PHP_INI"
+else 
+    sed -i "s/@PHP_DEFAULT_SOCKET_TIMEOUT/${PHP_DEFAULT_SOCKET_TIMEOUT}/g" "$TMP_PHP_INI"
+fi
+
+## php post max size ##
+if [[ -z "$PHP_POST_MAX_SIZE" ]]; then 
+    sed -i "s/@PHP_POST_MAX_SIZE/512M/g" "$TMP_PHP_INI"
+else 
+    sed -i "s/@PHP_POST_MAX_SIZE/${PHP_POST_MAX_SIZE}/g" "$TMP_PHP_INI"
+fi
+
+## php disable classes ##
+if [[ -z "$PHP_DISABLE_CLASSES" ]]; then 
+    sed -i "s/@PHP_DISABLE_CLASSES//g" "$TMP_PHP_INI"
+else 
+    sed -i "s/@PHP_DISABLE_CLASSES/${PHP_DISABLE_CLASSES}/g" "$TMP_PHP_INI"
+fi
+
+## php disable functions ##
+if [[ -z "$PHP_DISABLE_FUNCTIONS" ]]; then 
+    sed -i "s/@PHP_DISABLE_FUNCTIONS//g" "$TMP_PHP_INI"
+else 
+    sed -i "s/@PHP_DISABLE_FUNCTIONS/${PHP_DISABLE_FUNCTIONS}/g" "$TMP_PHP_INI"
+fi
+
+## opcache huge code pages ##
+if [[ -z "$OPCACHE_HUGE_CODE_PAGES" ]]; then 
+    sed -i "s/@OPCACHE_HUGE_CODE_PAGES/0/g" "$TMP_PHP_INI"
+elif [[ "$OPCACHE_HUGE_CODE_PAGES" == "true" ]]; then
+    sed -i "s/@OPCACHE_HUGE_CODE_PAGES/1/g" "$TMP_PHP_INI"
+elif [[ "$OPCACHE_HUGE_CODE_PAGES" == "On" ]]; then
+    sed -i "s/@OPCACHE_HUGE_CODE_PAGES/1/g" "$TMP_PHP_INI"
+elif [[ "$OPCACHE_HUGE_CODE_PAGES" == "false" ]]; then
+    sed -i "s/@OPCACHE_HUGE_CODE_PAGES/0/g" "$TMP_PHP_INI"
+elif [[ "$OPCACHE_HUGE_CODE_PAGES" == "Off" ]]; then
+    sed -i "s/@OPCACHE_HUGE_CODE_PAGES/0/g" "$TMP_PHP_INI"
+fi
+
+## opcache revalidate frequency ##
+if [[ -z "$OPCACHE_REVALIDATE_FREQUENCY" ]]; then 
+    sed -i "s/@OPCACHE_REVALIDATE_FREQUENCY/2/g" "$TMP_PHP_INI"
+else 
+    sed -i "s/@OPCACHE_REVALIDATE_FREQUENCY/${OPCACHE_REVALIDATE_FREQUENCY}/g" "$TMP_PHP_INI"
+fi
+
+## opcache max wasted percentage ##
+if [[ -z "$OPCACHE_MAX_WASTED_PERCENTAGE" ]]; then 
+    sed -i "s/@OPCACHE_MAX_WASTED_PERCENTAGE/5/g" "$TMP_PHP_INI"
+else 
+    sed -i "s/@OPCACHE_MAX_WASTED_PERCENTAGE/${OPCACHE_MAX_WASTED_PERCENTAGE}/g" "$TMP_PHP_INI"
+fi
+
+## opcache max accelerated files ##
+if [[ -z "$OPCACHE_MAX_ACCELERATED_FILES" ]]; then 
+    sed -i "s/@OPCACHE_MAX_ACCELERATED_FILES/10000/g" "$TMP_PHP_INI"
+else 
+    sed -i "s/@OPCACHE_MAX_ACCELERATED_FILES/${OPCACHE_MAX_ACCELERATED_FILES}/g" "$TMP_PHP_INI"
+fi
+
+## opcache interned strings buffer ##
+if [[ -z "$OPCACHE_INTERNED_STRINGS_BUFFER" ]]; then 
+    sed -i "s/@OPCACHE_INTERNED_STRINGS_BUFFER/64/g" "$TMP_PHP_INI"
+else 
+    sed -i "s/@OPCACHE_INTERNED_STRINGS_BUFFER/${OPCACHE_INTERNED_STRINGS_BUFFER}/g" "$TMP_PHP_INI"
+fi
+
+## opcache memory consumption ##
+if [[ -z "$OPCACHE_MEMORY_CONSUMPTION" ]]; then 
+    sed -i "s/@OPCACHE_MEMORY_CONSUMPTION/256/g" "$TMP_PHP_INI"
+else 
+    sed -i "s/@OPCACHE_MEMORY_CONSUMPTION/${OPCACHE_MEMORY_CONSUMPTION}/g" "$TMP_PHP_INI"
+fi
+
+
+## newer stuff ##
+
+## opcache preload ##
+if [[ -z "$OPCACHE_PRELOAD" ]]; then 
+    sed -i "s/@OPCACHE_PRELOAD/0/g" "$TMP_PHP_INI"
+else 
+    sed -i "s/@OPCACHE_PRELOAD/${OPCACHE_PRELOAD}/g" "$TMP_PHP_INI"
+fi
+
+## opcache blacklist filename ##
+if [[ -z "$OPCACHE_BLACKLIST_FILENAME" ]]; then 
+    sed -i "s/@OPCACHE_BLACKLIST_FILENAME//g" "$TMP_PHP_INI"
+else 
+    sed -i "s/@OPCACHE_BLACKLIST_FILENAME/${OPCACHE_BLACKLIST_FILENAME}/g" "$TMP_PHP_INI"
+fi
+
+
+####################################################################################################
+#### SS-Install-PHP-Config: Configure PHP-FPM.conf Boilerplate (Per Ubuntu Version) ################
+####################################################################################################
+
+## emerg restart threshold ##
+if [[ -z "$FPM_EMERGENCY_RESTART_THRESHOLD" ]]; then 
+    sed -i "s/@FPM_EMERGENCY_RESTART_THRESHOLD/10/g" /tmp/php-fpm.conf
+else 
+    sed -i "s/@FPM_EMERGENCY_RESTART_THRESHOLD/${FPM_EMERGENCY_RESTART_THRESHOLD}/g" /tmp/php-fpm.conf
+fi
+
+## emerg restart time ##
+if [[ -z "$FPM_EMERGENCY_RESTART_INTERVAL" ]]; then 
+    sed -i "s/@FPM_EMERGENCY_RESTART_INTERVAL/1m/g" /tmp/php-fpm.conf
+else 
+    sed -i "s/@FPM_EMERGENCY_RESTART_INTERVAL/${FPM_EMERGENCY_RESTART_INTERVAL}/g" /tmp/php-fpm.conf
+fi
+
+## process control timeout ##
+if [[ -z "$FPM_PROCESS_CONTROL_TIMEOUT" ]]; then 
+    sed -i "s/@FPM_PROCESS_CONTROL_TIMEOUT/10s/g" /tmp/php-fpm.conf
+else 
+    sed -i "s/@FPM_PROCESS_CONTROL_TIMEOUT/${FPM_PROCESS_CONTROL_TIMEOUT}/g" /tmp/php-fpm.conf
+fi
+
+## process max ##
+if [[ -z "$FPM_PROCESS_MAX" ]]; then 
+    sed -i "s/@FPM_PROCESS_MAX/128/g" /tmp/php-fpm.conf
+else 
+    sed -i "s/@FPM_PROCESS_MAX/${FPM_PROCESS_MAX}/g" /tmp/php-fpm.conf
+fi
+
+## process priority ##
+if [[ -z "$FPM_PROCESS_PRIORITY" ]]; then 
+    sed -i "s/@FPM_PROCESS_PRIORITY/-19/g" /tmp/php-fpm.conf
+else 
+    sed -i "s/@FPM_PROCESS_PRIORITY/${FPM_PROCESS_PRIORITY}/g" /tmp/php-fpm.conf
+fi
+
+## rlimit files ##
+if [[ -z "$FPM_RLIMIT_FILES" ]]; then 
+    sed -i "s/@FPM_RLIMIT_FILES/1024/g" /tmp/php-fpm.conf
+else 
+    sed -i "s/@FPM_RLIMIT_FILES/${FPM_RLIMIT_FILES}/g" /tmp/php-fpm.conf
+fi
+
+## rlimit core ##
+if [[ -z "$FPM_RLIMIT_CORE" ]]; then 
+    sed -i "s/@FPM_RLIMIT_CORE/0/g" /tmp/php-fpm.conf
+else 
+    sed -i "s/@FPM_RLIMIT_CORE/${FPM_RLIMIT_CORE}/g" /tmp/php-fpm.conf
+fi
+
+## systemd interval ##
+if [[ -z "$FPM_SYSTEMD_INTERVAL" ]]; then 
+    sed -i "s/@FPM_SYSTEMD_INTERVAL/10/g" /tmp/php-fpm.conf
+else 
+    sed -i "s/@FPM_SYSTEMD_INTERVAL/${FPM_SYSTEMD_INTERVAL}/g" /tmp/php-fpm.conf
+fi
+
+####################################################################################################
+#### SS-Install-PHP-Config: Configure WWW.conf Boilerplate (Per Ubuntu Version) ####################
+####################################################################################################
+
+## pool listen backlog ##
+if [[ -z "$WWW_LISTEN_BACKLOG" ]]; then 
+    sed -i "s/@WWW_LISTEN_BACKLOG/65535/g" /tmp/www.conf
+else 
+    sed -i "s/@WWW_LISTEN_BACKLOG/${WWW_LISTEN_BACKLOG}/g" /tmp/www.conf
+fi
+
+## pool type ##
+if [[ -z "$WWW_PM_MODE" ]]; then 
+    sed -i "s/@WWW_PM_MODE/ondemand/g" /tmp/www.conf
+else 
+    sed -i "s/@WWW_PM_MODE/${WWW_PM_MODE}/g" /tmp/www.conf
+fi
+
+## pool max children ##
+if [[ -z "$WWW_PM_MAX_CHILDREN" ]]; then 
+    sed -i "s/@WWW_PM_MAX_CHILDREN/20/g" /tmp/www.conf
+else 
+    sed -i "s/@WWW_PM_MAX_CHILDREN/${WWW_PM_MAX_CHILDREN}/g" /tmp/www.conf
+fi
+
+## pool start servers ##
+if [[ -z "$WWW_PM_START_SERVERS" ]]; then 
+    sed -i "s/@WWW_PM_START_SERVERS/2/g" /tmp/www.conf
+else 
+    sed -i "s/@WWW_PM_START_SERVERS/${WWW_PM_START_SERVERS}/g" /tmp/www.conf
+fi
+
+## pool min spare servers ##
+if [[ -z "$WWW_PM_MIN_SPARE_SERVERS" ]]; then 
+    sed -i "s/@WWW_PM_MIN_SPARE_SERVERS/1/g" /tmp/www.conf
+else 
+    sed -i "s/@WWW_PM_MIN_SPARE_SERVERS/${WWW_PM_MIN_SPARE_SERVERS}/g" /tmp/www.conf
+fi
+
+## pool max spare servers ##
+if [[ -z "$WWW_PM_MAX_SPARE_SERVERS" ]]; then 
+    sed -i "s/@WWW_PM_MAX_SPARE_SERVERS/3/g" /tmp/www.conf
+else 
+    sed -i "s/@WWW_PM_MAX_SPARE_SERVERS/${WWW_PM_MAX_SPARE_SERVERS}/g" /tmp/www.conf
+fi
+
+## pool max spawn rate ##
+if [[ -z "$WWW_PM_MAX_SPAWN_RATE" ]]; then 
+    sed -i "s/@WWW_PM_MAX_SPAWN_RATE/32/g" /tmp/www.conf
+else 
+    sed -i "s/@WWW_PM_MAX_SPAWN_RATE/${WWW_PM_MAX_SPAWN_RATE}/g" /tmp/www.conf
+fi
+
+## pool process idle timeout ##
+if [[ -z "$WWW_PM_PROCESS_IDLE_TIMEOUT" ]]; then 
+    sed -i "s/@WWW_PM_PROCESS_IDLE_TIMEOUT/10s/g" /tmp/www.conf
+else 
+    sed -i "s/@WWW_PM_PROCESS_IDLE_TIMEOUT/${WWW_PM_PROCESS_IDLE_TIMEOUT}/g" /tmp/www.conf
+fi
+
+## pool max requests ##
+if [[ -z "$WWW_PM_MAX_REQUESTS" ]]; then 
+    sed -i "s/@WWW_PM_MAX_REQUESTS/500/g" /tmp/www.conf
+else 
+    sed -i "s/@WWW_PM_MAX_REQUESTS/${WWW_PM_MAX_REQUESTS}/g" /tmp/www.conf
+fi
+
+## pool request terminate timeout ##
+if [[ -z "$WWW_REQUEST_TERMINATE_TIMEOUT" ]]; then 
+    sed -i "s/@WWW_REQUEST_TERMINATE_TIMEOUT/300/g" /tmp/www.conf
+else 
+    sed -i "s/@WWW_REQUEST_TERMINATE_TIMEOUT/${WWW_REQUEST_TERMINATE_TIMEOUT}/g" /tmp/www.conf
+fi
+
+## pool rlimit files ##
+if [[ -z "$WWW_RLIMIT_FILES" ]]; then 
+    sed -i "s/@WWW_RLIMIT_FILES/65535/g" /tmp/www.conf
+else 
+    sed -i "s/@WWW_RLIMIT_FILES/${WWW_RLIMIT_FILES}/g" /tmp/www.conf
+fi
+
+## pool rlimit core ##
+if [[ -z "$WWW_RLIMIT_CORE" ]]; then 
+    sed -i "s/@WWW_RLIMIT_CORE/0/g" /tmp/www.conf
+else 
+    sed -i "s/@WWW_RLIMIT_CORE/${WWW_RLIMIT_CORE}/g" /tmp/www.conf
+fi
+
+####################################################################################################
+#### SS-Install-PHP-Config: Copy Configuration Files To Destination (PHP-FPM) ######################
+####################################################################################################
+
+if [[ "${SS_APP}" != "mysql" ]]; then
+
+## ubuntu 22.04 ##
+if [[ "${UBUNTU_VERSION}" == "22.04" ]]; then
+    ss_mv "${TMP_PHP_FPM_CONF}" "${PATH_PHP_FPM_CONF_81}"
+    ss_cp "${TMP_PHP_INI}" "${PATH_PHP_INI_FPM_81}"
+    ss_cp "${TMP_PHP_INI}" "${PATH_PHP_INI_CLI_81}"
+    ss_mv "${TMP_WWW_CONF}" "${PATH_WWW_CONF_81}"
+fi
+
+## ubuntu 20.04 ##
+if [[ "${UBUNTU_VERSION}" == "20.04" ]]; then
+    ss_mv "${TMP_PHP_FPM_CONF}" "${PATH_PHP_FPM_CONF_74}"
+    ss_cp "${TMP_PHP_INI}" "${PATH_PHP_INI_FPM_74}"
+    ss_cp "${TMP_PHP_INI}" "${PATH_PHP_INI_CLI_74}"
+    ss_mv "${TMP_WWW_CONF}" "${PATH_WWW_CONF_74}"
+fi
+
+## ubuntu 18.04 ##
+if [[ "${UBUNTU_VERSION}" == "18.04" ]]; then
+    ss_mv "${TMP_PHP_FPM_CONF}" "${PATH_PHP_FPM_CONF_72}"
+    ss_cp "${TMP_PHP_INI}" "${PATH_PHP_INI_FPM_72}"
+    ss_cp "${TMP_PHP_INI}" "${PATH_PHP_INI_CLI_72}"
+    ss_mv "${TMP_WWW_CONF}" "${PATH_WWW_CONF_72}"
+fi
+
+fi
+
+####################################################################################################
+#### SS-Install-PHP-Config: Reset Permissions (PHP-FPM) ############################################
+####################################################################################################
+
+## run ss-perms-php-config ##
+source "${PATH_SS_PERMS_PHP_CONFIG}"
+
+####################################################################################################
+#### SS-Install-PHP-Config: Restart Services (PHP-FPM) #############################################
+####################################################################################################
+
+## run ss-restart-php ##
+source "${PATH_SS_RESTART_PHP}"
+
+####################################################################################################
+#### PLACEHOLDER: Reset Permissions (SlickStack Scripts) ###########################################
+####################################################################################################
+
+## we include this permissions reset in all cron jobs and bash scripts for redundancy ##
+## chmod 0700 means only the root/sudo users can execute any SlickStack scripts ##
+
+## THIS SNIPPET DOES NOT RELY ON SS-CONFIG OR SS-FUNCTIONS
+## SNIPPET: ss bash scripts, ss cron jobs
+## UPDATED: 02JUL2022
+
+chown root:root /var/www/ss* ## must be root:root
+chown root:root /var/www/crons/*cron* ## must be root:root
+chown root:root /var/www/crons/custom/*cron* ## must be root:root
+chmod 0700 /var/www/ss* ## 0700 means only root/sudo can execute
+chmod 0700 /var/www/crons/*cron* ## 0700 means only root/sudo can execute
+chmod 0700 /var/www/crons/custom/*cron* ## 0700 means only root/sudo can execute
+
+####################################################################################################
+#### SlickStack: External References Used To Improve This Script (Thanks, Interwebz) ###############
+####################################################################################################
+
+## Ref:
+
+## SS_EOF
